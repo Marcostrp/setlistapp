@@ -1,7 +1,7 @@
 {
   "name": "SetList Pro",
   "short_name": "SetList",
-  "start_url": "setlist-app.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0d0d0f",
   "theme_color": "#0d0d0f",
