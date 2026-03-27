@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SetList Pro</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --accent: #f5a623;
+    --accent2: #e8442a;
+    --text: #f0ede8;
+    --text2: #8a8796;
+    --text3: #5a5768;
+    --sidebar-w: 260px;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-size: 18px;
+    --radius: 10px;
+    --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .light-mode {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface2: #ece9e3;
+    --border: #d8d4cc;
+    --text: #1a1814;
+    --text2: #5a5550;
+    --text3: #9a9590;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+  /* ─── SCREENS ─── */
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; }
+  .screen.hidden { transform: translateX(100%); opacity: 0; pointer-events: none; }
+  .screen.slide-left { transform: translateX(-100%); opacity: 0; pointer-events: none; }
+
+  /* ─── HOME ─── */
+  #home { background: var(--bg); }
+  .home-header {
+    padding: 52px 24px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .home-logo { font-family: var(--font-display); font-size: 42px; letter-spacing: 2px; color: var(--accent); line-height: 1; }
+  .home-sub { color: var(--text2); font-size: 13px; font-weight: 300; margin-top: 2px; letter-spacing: 0.5px; }
+  .home-list { flex: 1; overflow-y: auto; padding: 16px 16px 100px; }
+  .home-list::-webkit-scrollbar { width: 4px; }
+  .home-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .setlist-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+    user-select: none;
+    touch-action: manipulation;
+  }
+  .setlist-card:active { background: var(--surface2); }
+  .setlist-card-icon {
+    width: 44px; height: 44px;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .setlist-card-info { flex: 1; min-width: 0; }
+  .setlist-card-name { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .setlist-card-count { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .setlist-card-del {
+    width: 36px; height: 36px;
+    border: none; background: transparent;
+    color: var(--text3); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    transition: color var(--transition), background var(--transition);
+    flex-shrink: 0;
+  }
+  .setlist-card-del:active { color: var(--accent2); background: rgba(232,68,42,0.1); }
+  .home-fab {
+    position: fixed; bottom: 28px; right: 24px;
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 24px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 32px rgba(245,166,35,0.35);
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .home-fab:active { transform: scale(0.96); }
+  .empty-state { text-align: center; padding: 60px 24px; }
+  .empty-state .es-icon { font-size: 56px; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .empty-state p { color: var(--text2); font-size: 14px; line-height: 1.6; }
+
+  /* ─── SETLIST VIEW ─── */
+  #setlist-view { background: var(--bg); flex-direction: row; overflow: hidden; }
+  .setlist-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+  /* Sidebar */
+  .sidebar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    z-index: 50;
+    display: flex; flex-direction: column;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+  }
+  .sidebar.hidden { transform: translateX(calc(-1 * var(--sidebar-w))); }
+  .sidebar-header {
+    padding: 52px 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-title { font-family: var(--font-display); font-size: 28px; color: var(--accent); letter-spacing: 1px; }
+  .sidebar-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .sidebar-list { flex: 1; overflow-y: auto; padding: 8px 8px; }
+  .sidebar-list::-webkit-scrollbar { display: none; }
+  .song-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--transition);
+    margin-bottom: 2px;
+    user-select: none;
+  }
+  .song-item.active { background: rgba(245,166,35,0.12); }
+  .song-item:active { background: var(--surface2); }
+  .song-item.dragging { opacity: 0.4; }
+  .song-item.drag-over { border-top: 2px solid var(--accent); }
+  .song-drag-handle { color: var(--text3); font-size: 16px; cursor: grab; padding: 2px; touch-action: none; }
+  .song-item-name { flex: 1; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-item-del { color: var(--text3); font-size: 15px; padding: 4px; border: none; background: transparent; cursor: pointer; border-radius: 4px; }
+  .song-item-del:active { color: var(--accent2); }
+  .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
+  .add-song-btn {
+    width: 100%; padding: 10px; border-radius: 8px;
+    border: 1px dashed var(--border);
+    background: transparent; color: var(--text2);
+    font-family: var(--font-body); font-size: 13px;
+    cursor: pointer; transition: all var(--transition);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .add-song-btn:active { border-color: var(--accent); color: var(--accent); }
+
+  /* Song content area */
+  .song-area { flex: 1; overflow-y: auto; padding: 20px 20px 100px; }
+  .song-area::-webkit-scrollbar { width: 4px; }
+  .song-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .song-title-display { font-family: var(--font-display); font-size: 38px; letter-spacing: 1px; color: var(--accent); margin-bottom: 4px; line-height: 1.1; }
+  .song-artist-display { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+  .song-content-display { font-size: var(--font-size); line-height: 1.9; white-space: pre-wrap; font-family: var(--font-body); color: var(--text); }
+  .song-content-display.mono { font-family: var(--font-mono); font-size: calc(var(--font-size) * 0.88); line-height: 1.7; }
+  .song-content-edit {
+    width: 100%; min-height: 300px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 16px;
+    resize: vertical;
+    outline: none;
+    transition: border-color var(--transition);
+    margin-top: 8px;
+  }
+  .song-content-edit:focus { border-color: var(--accent); }
+  .no-song { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40px; color: var(--text2); }
+  .no-song-icon { font-size: 48px; margin-bottom: 16px; }
+
+  /* Top bar */
+  .topbar {
+    padding: 48px 16px 12px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    position: relative; z-index: 10;
+  }
+  .topbar-btn {
+    width: 40px; height: 40px;
+    border: none; background: var(--surface);
+    color: var(--text); border-radius: 8px;
+    font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+    transition: all var(--transition);
+    flex-shrink: 0;
+  }
+  .topbar-btn:active { background: var(--surface2); }
+  .topbar-btn.active { background: var(--accent); color: #0d0d0f; border-color: var(--accent); }
+  .topbar-title { flex: 1; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-actions { display: flex; gap: 6px; }
+
+  /* Floating toolbar */
+  .float-toolbar {
+    position: absolute;
+    bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 20;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .float-toolbar.editing-mode { opacity: 0; pointer-events: none; }
+  .ft-btn {
+    border: none; background: transparent;
+    color: var(--text2); cursor: pointer;
+    padding: 6px 10px; border-radius: 30px;
+    font-size: 18px;
+    transition: all var(--transition);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ft-btn:active, .ft-btn.active { background: var(--surface2); color: var(--text); }
+  .ft-sep { width: 1px; height: 20px; background: var(--border); }
+  .ft-fontsize { display: flex; align-items: center; gap: 6px; color: var(--text2); font-size: 12px; }
+  .ft-fontsize span { font-size: 13px; font-weight: 600; min-width: 24px; text-align: center; color: var(--text); }
+
+  /* ─── MODALS ─── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: flex-end;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+  .modal-sheet {
+    width: 100%; background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 24px;
+    transform: translateY(0);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .modal-overlay.hidden .modal-sheet { transform: translateY(100%); }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: var(--font-display); font-size: 26px; color: var(--accent); margin-bottom: 16px; letter-spacing: 1px; }
+  .modal-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal-input {
+    width: 100%; padding: 14px 16px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-family: var(--font-body); font-size: 15px;
+    outline: none; transition: border-color var(--transition);
+    margin-bottom: 14px;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .btn-primary {
+    flex: 1; padding: 14px;
+    background: var(--accent); color: #0d0d0f;
+    border: none; border-radius: var(--radius);
+    font-family: var(--font-body); font-weight: 600;
+    font-size: 15px; cursor: pointer;
+    transition: opacity var(--transition);
+  }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-cancel {
+    padding: 14px 20px;
+    background: var(--surface2); color: var(--text2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-family: var(--font-body); font-weight: 500;
+    font-size: 15px; cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-cancel:active { background: var(--border); }
+  .btn-danger {
+    flex: 1; padding: 14px;
+    background: rgba(232,68,42,0.12); color: var(--accent2);
+    border: 1px solid rgba(232,68,42,0.3); border-radius: var(--radius);
+    font-family: var(--font-body); font-weight: 600;
+    font-size: 15px; cursor: pointer;
+  }
+
+  /* Confirm modal */
+  .confirm-msg { font-size: 15px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; }
+
+  /* Edit song modal */
+  .edit-title-row { display: flex; gap: 10px; }
+  .edit-title-row .modal-input { margin-bottom: 0; }
+  .song-textarea {
+    width: 100%; height: 260px; resize: none;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-family: var(--font-mono); font-size: 13px;
+    line-height: 1.7; padding: 14px 16px;
+    outline: none; transition: border-color var(--transition);
+    margin-bottom: 14px;
+  }
+  .song-textarea:focus { border-color: var(--accent); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .tab-btn {
+    padding: 8px 16px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--text2);
+    font-family: var(--font-body); font-size: 13px;
+    cursor: pointer; transition: all var(--transition);
+  }
+  .tab-btn.active { background: var(--accent); color: #0d0d0f; border-color: var(--accent); font-weight: 600; }
+
+  /* Drag reorder home */
+  .setlist-card.dragging { opacity: 0.4; }
+  .setlist-card.drag-over { border-top: 2px solid var(--accent); }
+
+  /* Scrollbar hiding */
+  .sidebar-list, .home-list { -ms-overflow-style: none; scrollbar-width: thin; }
+  /* Bloqueia seleção de texto em botões e menus para parecer nativo */
+  button, .setlist-card, .song-item, .home-header, .topbar {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* Garante que a área da letra/cifra ainda permita seleção se o músico precisar */
+  .song-content-display {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  /* --- CSS PARA BUSCA ONLINE --- */
+  .online-search-section {
+    margin-bottom: 20px;
+    background: var(--surface2);
+    padding: 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .search-box-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  #search-status {
+    font-size: 13px;
+    text-align: center;
+    margin-top: 8px;
+    color: var(--text2);
+  }
+  .divider-text {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: var(--text3);
+    font-size: 12px;
+  }
+  .divider-text::before, .divider-text::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+  }
+  .divider-text:not(:empty)::before { margin-right: .5em; }
+  .divider-text:not(:empty)::after { margin-left: .5em; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HOME SCREEN ═══════════════ -->
+<div class="screen" id="home">
+  <div class="home-header">
+    <div class="home-logo">SetList Pro</div>
+    <div class="home-sub">Suas setlists, prontas para o palco</div>
+  </div>
+  <div class="home-list" id="home-list"></div>
+  <button class="home-fab" onclick="openCreateSetlist()">
+    <span>＋</span> Nova Setlist
+  </button>
+</div>
+
+<!-- ═══════════════ SETLIST VIEW ═══════════════ -->
+<div class="screen hidden" id="setlist-view">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title" id="sidebar-title">Setlist</div>
+      <div class="sidebar-sub" id="sidebar-sub">0 músicas</div>
+    </div>
+    <div class="sidebar-list" id="song-list"></div>
+    <div class="sidebar-footer">
+      <button class="add-song-btn" onclick="openAddSong()">＋ Adicionar música</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="setlist-main" id="setlist-main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <button class="topbar-btn" onclick="goHome()" title="Voltar">←</button>
+      <div class="topbar-title" id="topbar-title">Setlist</div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Músicas">☰</button>
+        <button class="topbar-btn" id="theme-btn" onclick="toggleTheme()" title="Tema">◐</button>
+      </div>
+    </div>
+
+    <!-- Song Display -->
+    <div class="song-area" id="song-area">
+      <div class="no-song" id="no-song-msg">
+        <div class="no-song-icon">🎵</div>
+        <p>Toque em uma música<br>no painel lateral para exibir</p>
+      </div>
+      <div id="song-display" style="display:none">
+        <div class="song-title-display" id="disp-title"></div>
+        <div class="song-artist-display" id="disp-artist"></div>
+        <!-- view mode -->
+        <div class="song-content-display" id="disp-lyrics"></div>
+        <!-- edit mode -->
+        <div id="edit-mode" style="display:none">
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchEditTab('lyrics')">Letra</button>
+            <button class="tab-btn" onclick="switchEditTab('chords')">Cifra</button>
+          </div>
+          <div style="margin-bottom:8px">
+            <div class="modal-label" id="edit-tab-label">LETRA</div>
+            <textarea class="song-textarea" id="edit-lyrics-input" placeholder="Cole a letra aqui..."></textarea>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-cancel" style="flex:1" onclick="cancelEdit()">Cancelar</button>
+            <button class="btn-primary" style="flex:1" onclick="saveEdit()">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Float toolbar -->
+    <div class="float-toolbar" id="float-toolbar">
+      <button class="ft-btn" id="edit-btn" onclick="toggleEdit()" title="Editar">✏️</button>
+      <div class="ft-sep"></div>
+      <button class="ft-btn" id="chord-btn" onclick="toggleChords()" title="Cifra/Letra">🎸</button>
+      <div class="ft-sep"></div>
+      <div class="ft-fontsize">
+        <button class="ft-btn" onclick="changeFontSize(-1)">A-</button>
+        <span id="font-size-label">18</span>
+        <button class="ft-btn" onclick="changeFontSize(1)">A+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+<!-- Create Setlist -->
+<div class="modal-overlay hidden" id="modal-create-setlist">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nova Setlist</div>
+    <div class="modal-label">Nome da Setlist</div>
+    <input class="modal-input" id="input-setlist-name" placeholder="Ex: Show do Sábado" maxlength="60">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-create-setlist')">Cancelar</button>
+      <button class="btn-primary" onclick="createSetlist()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Setlist -->
+<div class="modal-overlay hidden" id="modal-del-setlist">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-song-title">Adicionar Música</div>
+    
+    <div class="online-search-section">
+      <div class="modal-label">BUSCAR CIFRA/LETRA ONLINE</div>
+      <div class="search-box-row">
+        <input class="modal-input" id="search-artist" placeholder="Artista" style="margin-bottom:0">
+        <input class="modal-input" id="search-title" placeholder="Música" style="margin-bottom:0">
+      </div>
+      <button class="btn-primary" onclick="searchLyricsOnline()" style="width:100%">
+        🔍 Buscar na Web
+      </button>
+      <div id="search-status" class="hidden"></div>
+    </div>
+
+    <div class="divider-text">OU PREENCHA MANUALMENTE</div>
+
+    <div class="edit-title-row" style="margin-bottom:14px">
+      <div style="flex:1">
+        <div class="modal-label">NOME DA MÚSICA</div>
+        <input class="modal-input" id="input-song-name" placeholder="Ex: Evidências" maxlength="80" style="margin-bottom:0">
+      </div>
+    </div>
+    <div class="modal-label">ARTISTA / BANDA</div>
+    <input class="modal-input" id="input-song-artist" placeholder="Ex: Chitãozinho & Xororó" maxlength="80">
+    <div class="tabs" id="song-tabs">
+      <button class="tab-btn active" id="tab-lyrics" onclick="switchSongTab('lyrics')">Letra</button>
+      <button class="tab-btn" id="tab-chords" onclick="switchSongTab('chords')">Cifra</button>
+    </div>
+    <textarea class="song-textarea" id="input-song-lyrics" placeholder="Letra aparecerá aqui..."></textarea>
+    <textarea class="song-textarea" id="input-song-chords" placeholder="Cifra aparecerá aqui..." style="display:none"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-add-song')">Cancelar</button>
+      <button class="btn-primary" id="btn-save-song" onclick="saveSong()">Adicionar</button>
+    </div>
+  </div>  
+</div>
+
+<!-- Add / Edit Song -->
+<div class="modal-overlay hidden" id="modal-add-song">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-song-title">Adicionar Música</div>
+    <div class="edit-title-row" style="margin-bottom:14px">
+      <div style="flex:1">
+        <div class="modal-label">NOME DA MÚSICA</div>
+        <input class="modal-input" id="input-song-name" placeholder="Ex: Evidências" maxlength="80" style="margin-bottom:0">
+      </div>
+    </div>
+    <div class="modal-label">ARTISTA / BANDA</div>
+    <input class="modal-input" id="input-song-artist" placeholder="Ex: Chitãozinho & Xororó" maxlength="80">
+    <div class="tabs" id="song-tabs">
+      <button class="tab-btn active" id="tab-lyrics" onclick="switchSongTab('lyrics')">Letra</button>
+      <button class="tab-btn" id="tab-chords" onclick="switchSongTab('chords')">Cifra</button>
+    </div>
+    <textarea class="song-textarea" id="input-song-lyrics" placeholder="Cole ou escreva a letra aqui..."></textarea>
+    <textarea class="song-textarea" id="input-song-chords" placeholder="Cole ou escreva a cifra aqui..." style="display:none"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-add-song')">Cancelar</button>
+      <button class="btn-primary" id="btn-save-song" onclick="saveSong()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Song -->
+<div class="modal-overlay hidden" id="modal-del-song">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Remover Música</div>
+    <div class="confirm-msg" id="confirm-del-song-msg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-del-song')">Cancelar</button>
+      <button class="btn-danger" onclick="confirmDeleteSong()">Remover</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────
+let state = {
+  setlists: [],
+  currentSetlistId: null,
+  currentSongIndex: null,
+  showChords: false,
+  fontSize: 18,
+  lightMode: false,
+};
+
+let pendingDeleteSetlistId = null;
+let pendingDeleteSongIndex = null;
+let editingSongIndex = null;
+let currentSongTab = 'lyrics';
+let sidebarVisible = true;
+let sidebarTimer = null;
+let dragSrcSong = null;
+let dragSrcSetlist = null;
+let currentEditTab = 'lyrics';
+
+// --- LOGICA DE NAVEGAÇÃO (BOTÃO VOLTAR) ---
+function pushState(screenId) {
+  history.pushState({ screen: screenId }, "");
+}
+
+window.onpopstate = function(event) {
+  // Se houver um modal aberto, fecha ele e cancela a volta
+  const openModal = document.querySelector('.modal-overlay:not(.hidden)');
+  if (openModal) {
+    openModal.classList.add('hidden');
+    history.pushState(null, ""); // Mantém na mesma tela
+    return;
+  }
+  
+  if (event.state && event.state.screen === 'home') {
+    goHome();
+  }
+};
+
+// --- FEEDBACK TÁTIL (HAPTIC) ---
+function vibrate() {
+  if (navigator.vibrate) navigator.vibrate(40);
+}
+
+// Atualize sua função openSetlist para incluir o pushState
+const originalOpenSetlist = openSetlist;
+openSetlist = function(id) {
+  pushState('view');
+  vibrate();
+  originalOpenSetlist(id);
+};
+
+// Adicione vibrate() nos botões de salvar/excluir
+
+// ─── STORAGE ──────────────────────────────────────
+function save() { localStorage.setItem('slp_data', JSON.stringify(state)); }
+function load() {
+  try {
+    const d = localStorage.getItem('slp_data');
+    if (d) state = { ...state, ...JSON.parse(d) };
+  } catch(e) {}
+}
+
+// ─── HELPERS ──────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function currentSetlist() { return state.setlists.find(s => s.id === state.currentSetlistId); }
+
+// ─── MODALS ───────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  if (id === 'modal-add-song') { editingSongIndex = null; }
+}
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.add('hidden'); });
+});
+
+// ─── SCREENS ──────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.add('hidden');
+    s.classList.remove('slide-left');
+  });
+  document.getElementById(id).classList.remove('hidden');
+}
+function goHome() {
+  document.getElementById('setlist-view').classList.add('hidden');
+  document.getElementById('home').classList.remove('hidden');
+  document.getElementById('home').classList.remove('slide-left');
+  renderHome();
+}
+function openSetlist(id) {
+  state.currentSetlistId = id;
+  state.currentSongIndex = null;
+  state.showChords = false;
+  document.getElementById('home').classList.add('slide-left');
+  document.getElementById('setlist-view').classList.remove('hidden');
+  sidebarVisible = true;
+  renderSetlistView();
+  resetSidebarTimer();
+}
+
+// ─── HOME ──────────────────────────────────────────
+function renderHome() {
+  const el = document.getElementById('home-list');
+  if (!state.setlists.length) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">🎶</div><h3>Nenhuma setlist ainda</h3><p>Crie sua primeira setlist<br>para o próximo show!</p></div>`;
+    return;
+  }
+  el.innerHTML = state.setlists.map((sl, i) => `
+    <div class="setlist-card" draggable="true"
+      data-id="${sl.id}"
+      ondragstart="homeCardDragStart(event,'${sl.id}')"
+      ondragover="homeCardDragOver(event)"
+      ondrop="homeCardDrop(event,'${sl.id}')"
+      ondragend="homeCardDragEnd(event)"
+      onclick="openSetlist('${sl.id}')">
+      <div class="setlist-card-icon">🎵</div>
+      <div class="setlist-card-info">
+        <div class="setlist-card-name">${sl.name}</div>
+        <div class="setlist-card-count">${sl.songs.length} ${sl.songs.length === 1 ? 'música' : 'músicas'}</div>
+      </div>
+      <button class="setlist-card-del" onclick="event.stopPropagation();openDeleteSetlist('${sl.id}')" title="Excluir">🗑</button>
+    </div>
+  `).join('');
+}
+
+// ─── CREATE SETLIST ────────────────────────────────
+function openCreateSetlist() {
+  document.getElementById('input-setlist-name').value = '';
+  openModal('modal-create-setlist');
+  setTimeout(() => document.getElementById('input-setlist-name').focus(), 300);
+}
+document.getElementById('input-setlist-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') createSetlist();
+});
+function createSetlist() {
+  const name = document.getElementById('input-setlist-name').value.trim();
+  if (!name) return;
+  state.setlists.push({ id: uid(), name, songs: [] });
+  save(); renderHome(); closeModal('modal-create-setlist');
+}
+
+// ─── DELETE SETLIST ───────────────────────────────
+function openDeleteSetlist(id) {
+  pendingDeleteSetlistId = id;
+  const sl = state.setlists.find(s => s.id === id);
+  document.getElementById('confirm-del-msg').textContent =
+    `Tem certeza que deseja excluir "${sl.name}"? Esta ação não pode ser desfeita.`;
+  openModal('modal-del-setlist');
+}
+function confirmDeleteSetlist() {
+  state.setlists = state.setlists.filter(s => s.id !== pendingDeleteSetlistId);
+  save(); renderHome(); closeModal('modal-del-setlist');
+}
+
+// ─── HOME DRAG REORDER ────────────────────────────
+let homeDragSrc = null;
+function homeCardDragStart(e, id) { homeDragSrc = id; e.currentTarget.classList.add('dragging'); }
+function homeCardDragOver(e) { e.preventDefault(); }
+function homeCardDrop(e, targetId) {
+  e.preventDefault();
+  if (homeDragSrc === targetId) return;
+  const from = state.setlists.findIndex(s => s.id === homeDragSrc);
+  const to = state.setlists.findIndex(s => s.id === targetId);
+  const [item] = state.setlists.splice(from, 1);
+  state.setlists.splice(to, 0, item);
+  save(); renderHome();
+}
+function homeCardDragEnd(e) { e.currentTarget.classList.remove('dragging'); }
+
+// ─── SETLIST VIEW ─────────────────────────────────
+function renderSetlistView() {
+  const sl = currentSetlist();
+  if (!sl) return;
+  document.getElementById('sidebar-title').textContent = sl.name;
+  document.getElementById('topbar-title').textContent = sl.name;
+  document.getElementById('sidebar-sub').textContent =
+    sl.songs.length + (sl.songs.length === 1 ? ' música' : ' músicas');
+  renderSongList();
+  renderSongDisplay();
+}
+
+function renderSongList() {
+  const sl = currentSetlist();
+  const el = document.getElementById('song-list');
+  el.innerHTML = sl.songs.map((song, i) => `
+    <div class="song-item ${state.currentSongIndex === i ? 'active' : ''}"
+      draggable="true"
+      data-i="${i}"
+      ondragstart="songDragStart(event,${i})"
+      ondragover="songDragOver(event,${i})"
+      ondrop="songDrop(event,${i})"
+      ondragend="songDragEnd(event)"
+      onclick="selectSong(${i})">
+      <span class="song-drag-handle">⠿</span>
+      <span class="song-item-name">${song.name}</span>
+      <button class="song-item-del" onclick="event.stopPropagation();openDeleteSong(${i})">✕</button>
+    </div>
+  `).join('');
+
+  // Touch drag support for song list
+  attachTouchDrag(el);
+}
+
+// Touch drag for sidebar song list
+function attachTouchDrag(container) {
+  let touchSrc = null, touchSrcEl = null, clone = null, startY = 0;
+  container.querySelectorAll('.song-drag-handle').forEach(handle => {
+    handle.addEventListener('touchstart', e => {
+      const item = handle.closest('.song-item');
+      touchSrc = parseInt(item.dataset.i);
+      touchSrcEl = item;
+      startY = e.touches[0].clientY;
+      clone = item.cloneNode(true);
+      clone.style.cssText = `position:fixed;left:${item.getBoundingClientRect().left}px;top:${item.getBoundingClientRect().top}px;width:${item.offsetWidth}px;opacity:0.8;z-index:9999;pointer-events:none;background:var(--surface2);border-radius:8px;`;
+      document.body.appendChild(clone);
+      item.classList.add('dragging');
+    }, { passive: true });
+    handle.addEventListener('touchmove', e => {
+      if (touchSrc === null) return;
+      const dy = e.touches[0].clientY - startY;
+      clone.style.top = (parseInt(clone.style.top) + dy) + 'px';
+      startY = e.touches[0].clientY;
+      const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+      const target = el?.closest('.song-item');
+      container.querySelectorAll('.song-item').forEach(i => i.classList.remove('drag-over'));
+      if (target && target !== touchSrcEl) target.classList.add('drag-over');
+    }, { passive: true });
+    handle.addEventListener('touchend', e => {
+      if (touchSrc === null) return;
+      clone?.remove();
+      touchSrcEl?.classList.remove('dragging');
+      const el2 = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      const target = el2?.closest('.song-item');
+      container.querySelectorAll('.song-item').forEach(i => i.classList.remove('drag-over'));
+      if (target && parseInt(target.dataset.i) !== touchSrc) {
+        songReorder(touchSrc, parseInt(target.dataset.i));
+      }
+      touchSrc = null; touchSrcEl = null; clone = null;
+    });
+  });
+}
+
+function songDragStart(e, i) { dragSrcSong = i; e.currentTarget.classList.add('dragging'); }
+function songDragOver(e, i) { e.preventDefault(); document.querySelectorAll('.song-item').forEach(el => el.classList.remove('drag-over')); document.querySelector(`.song-item[data-i="${i}"]`)?.classList.add('drag-over'); }
+function songDrop(e, targetI) { e.preventDefault(); document.querySelectorAll('.song-item').forEach(el => el.classList.remove('drag-over')); if (dragSrcSong !== targetI) songReorder(dragSrcSong, targetI); }
+function songDragEnd(e) { e.currentTarget.classList.remove('dragging'); }
+function songReorder(from, to) {
+  const sl = currentSetlist();
+  const [item] = sl.songs.splice(from, 1);
+  sl.songs.splice(to, 0, item);
+  if (state.currentSongIndex === from) state.currentSongIndex = to;
+  save(); renderSongList();
+}
+
+function selectSong(i) {
+  state.currentSongIndex = i;
+  renderSongList();
+  renderSongDisplay();
+  // hide sidebar after select on small screens
+  resetSidebarTimer(1200);
+}
+
+function renderSongDisplay() {
+  const sl = currentSetlist();
+  const noMsg = document.getElementById('no-song-msg');
+  const display = document.getElementById('song-display');
+
+  if (state.currentSongIndex === null || !sl.songs[state.currentSongIndex]) {
+    noMsg.style.display = 'flex';
+    display.style.display = 'none';
+    return;
+  }
+  noMsg.style.display = 'none';
+  display.style.display = 'block';
+
+  const song = sl.songs[state.currentSongIndex];
+  document.getElementById('disp-title').textContent = song.name;
+  document.getElementById('disp-artist').textContent = song.artist || '';
+  const lyricsEl = document.getElementById('disp-lyrics');
+
+  const content = state.showChords ? (song.chords || song.lyrics || '') : (song.lyrics || song.chords || '');
+  lyricsEl.textContent = content;
+  lyricsEl.className = 'song-content-display' + (state.showChords ? ' mono' : '');
+  document.getElementById('song-area').style.setProperty('--font-size', state.fontSize + 'px');
+  document.getElementById('font-size-label').textContent = state.fontSize;
+
+  // chord btn active state
+  const chordBtn = document.getElementById('chord-btn');
+  chordBtn.classList.toggle('active', state.showChords);
+}
+
+// ─── SIDEBAR TOGGLE & TIMER ───────────────────────
+function toggleSidebar() {
+  sidebarVisible = !sidebarVisible;
+  document.getElementById('sidebar').classList.toggle('hidden', !sidebarVisible);
+  document.getElementById('sidebar-toggle-btn').classList.toggle('active', sidebarVisible);
+  if (sidebarVisible) resetSidebarTimer();
+}
+function resetSidebarTimer(delay = 5000) {
+  clearTimeout(sidebarTimer);
+  sidebarTimer = setTimeout(() => {
+    sidebarVisible = false;
+    document.getElementById('sidebar').classList.add('hidden');
+    document.getElementById('sidebar-toggle-btn').classList.remove('active');
+  }, delay);
+}
+// Show sidebar on touch start of sidebar toggle zone
+document.addEventListener('touchstart', e => {
+  const sb = document.getElementById('sidebar');
+  if (sb && !sidebarVisible) {
+    const x = e.touches[0].clientX;
+    if (x < 30) { sidebarVisible = true; sb.classList.remove('hidden'); resetSidebarTimer(); }
+  }
+});
+
+// ─── ADD / EDIT SONG ──────────────────────────────
+let currentSongTabModal = 'lyrics';
+function openAddSong() {
+  editingSongIndex = null;
+  document.getElementById('modal-song-title').textContent = 'Adicionar Música';
+  document.getElementById('btn-save-song').textContent = 'Adicionar';
+  document.getElementById('input-song-name').value = '';
+  document.getElementById('input-song-artist').value = '';
+  document.getElementById('input-song-lyrics').value = '';
+  document.getElementById('input-song-chords').value = '';
+  switchSongTab('lyrics');
+  openModal('modal-add-song');
+  setTimeout(() => document.getElementById('input-song-name').focus(), 350);
+}
+
+function switchSongTab(tab) {
+  currentSongTabModal = tab;
+  document.getElementById('input-song-lyrics').style.display = tab === 'lyrics' ? 'block' : 'none';
+  document.getElementById('input-song-chords').style.display = tab === 'chords' ? 'block' : 'none';
+  document.getElementById('tab-lyrics').classList.toggle('active', tab === 'lyrics');
+  document.getElementById('tab-chords').classList.toggle('active', tab === 'chords');
+}
+
+function saveSong() {
+  const name = document.getElementById('input-song-name').value.trim();
+  if (!name) { document.getElementById('input-song-name').focus(); return; }
+  const sl = currentSetlist();
+  const song = {
+    name,
+    artist: document.getElementById('input-song-artist').value.trim(),
+    lyrics: document.getElementById('input-song-lyrics').value,
+    chords: document.getElementById('input-song-chords').value,
+  };
+  if (editingSongIndex !== null) {
+    sl.songs[editingSongIndex] = { ...sl.songs[editingSongIndex], ...song };
+  } else {
+    sl.songs.push(song);
+    state.currentSongIndex = sl.songs.length - 1;
+  }
+  save(); renderSetlistView(); closeModal('modal-add-song');
+}
+
+// ─── DELETE SONG ──────────────────────────────────
+function openDeleteSong(i) {
+  pendingDeleteSongIndex = i;
+  const song = currentSetlist().songs[i];
+  document.getElementById('confirm-del-song-msg').textContent =
+    `Remover "${song.name}" desta setlist?`;
+  openModal('modal-del-song');
+}
+function confirmDeleteSong() {
+  const sl = currentSetlist();
+  sl.songs.splice(pendingDeleteSongIndex, 1);
+  if (state.currentSongIndex >= sl.songs.length) state.currentSongIndex = sl.songs.length - 1;
+  if (sl.songs.length === 0) state.currentSongIndex = null;
+  save(); renderSetlistView(); closeModal('modal-del-song');
+}
+
+// ─── EDIT CONTENT INLINE ──────────────────────────
+let editing = false;
+function toggleEdit() {
+  editing = !editing;
+  document.getElementById('edit-mode').style.display = editing ? 'block' : 'none';
+  document.getElementById('disp-lyrics').style.display = editing ? 'none' : 'block';
+  document.getElementById('float-toolbar').classList.toggle('editing-mode', editing);
+  document.getElementById('edit-btn').classList.toggle('active', editing);
+
+  if (editing) {
+    const song = currentSetlist()?.songs[state.currentSongIndex];
+    if (!song) return;
+    document.getElementById('edit-lyrics-input').value = state.showChords ? (song.chords || '') : (song.lyrics || '');
+    currentEditTab = state.showChords ? 'chords' : 'lyrics';
+    document.getElementById('edit-tab-label').textContent = state.showChords ? 'CIFRA' : 'LETRA';
+    // Show save buttons separately
+    document.getElementById('float-toolbar').classList.add('editing-mode');
+  }
+}
+function switchEditTab(tab) {
+  // save current before switching
+  const song = currentSetlist()?.songs[state.currentSongIndex];
+  if (song) {
+    if (currentEditTab === 'lyrics') song.lyrics = document.getElementById('edit-lyrics-input').value;
+    else song.chords = document.getElementById('edit-lyrics-input').value;
+  }
+  currentEditTab = tab;
+  document.getElementById('edit-lyrics-input').value = currentEditTab === 'lyrics' ? (song?.lyrics || '') : (song?.chords || '');
+  document.getElementById('edit-tab-label').textContent = tab === 'lyrics' ? 'LETRA' : 'CIFRA';
+  document.querySelectorAll('#edit-mode .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#edit-mode .tab-btn')[tab === 'lyrics' ? 0 : 1].classList.add('active');
+}
+function cancelEdit() {
+  editing = false;
+  document.getElementById('edit-mode').style.display = 'none';
+  document.getElementById('disp-lyrics').style.display = 'block';
+  document.getElementById('float-toolbar').classList.remove('editing-mode');
+  document.getElementById('edit-btn').classList.remove('active');
+}
+function saveEdit() {
+  const song = currentSetlist()?.songs[state.currentSongIndex];
+  if (!song) return;
+  const val = document.getElementById('edit-lyrics-input').value;
+  if (currentEditTab === 'lyrics') song.lyrics = val;
+  else song.chords = val;
+  save(); cancelEdit(); renderSongDisplay();
+}
+
+// ─── CHORDS TOGGLE ────────────────────────────────
+function toggleChords() { state.showChords = !state.showChords; save(); renderSongDisplay(); }
+
+// ─── FONT SIZE ────────────────────────────────────
+function changeFontSize(delta) {
+  state.fontSize = Math.min(36, Math.max(12, state.fontSize + delta));
+  save(); renderSongDisplay();
+}
+
+// ─── THEME ────────────────────────────────────────
+function toggleTheme() {
+  state.lightMode = !state.lightMode;
+  document.documentElement.classList.toggle('light-mode', state.lightMode);
+  save();
+}
+
+// ─── DEMO DATA ────────────────────────────────────
+function seedDemo() {
+  if (state.setlists.length > 0) return;
+  state.setlists = [
+    {
+      id: uid(), name: 'Show do Sábado',
+      songs: [
+        { name: 'Evidências', artist: 'Chitãozinho & Xororó',
+          lyrics: `Eu plantei a semente mais você deixou minguou\nFez o nosso amor secar antes mesmo de frutificar\n\nSempre que a vontade bate eu boto a culpa no destino\nSei que esse caminho não é o meu\n\nVocê foi embora e eu fiquei aqui plantado\nFeito um passarinho que perdeu o seu ninho\n\nEvidências, só evidências\nDe que você foi embora e me deixou sem esperanças`,
+          chords: `[Tom: G]\nG          C\nEu plantei a semente\nD          G\nMas você deixou minguou\nG          C\nFez o nosso amor secar\nD          G\nAntes mesmo de frutificar\n\n[Refrão]\nG     C     D     G\nEvidências, só evidências` },
+        { name: 'Pense Em Mim', artist: 'Leandro & Leonardo',
+          lyrics: `Pense em mim quando você sentir saudade\nDo meu beijo, do meu abraço e do meu amor\nPense em mim quando você se lembrar dos momentos\nQue vivemos juntos e que não voltam mais\n\nPense em mim, pense em mim\nE deixa o coração falar mais alto\nPense em mim, pense em mim\nE volta logo que eu não consigo te esquecer`,
+          chords: `[Tom: D]\nD              A\nPense em mim quando você sentir\nBm             G\nSaudade do meu beijo\nD              A\nDo meu abraço e do meu amor` },
+      ]
+    },
+    {
+      id: uid(), name: 'Ensaio da Banda',
+      songs: [
+        { name: 'Garota de Ipanema', artist: 'Tom Jobim',
+          lyrics: `Olha que coisa mais linda\nMais cheia de graça\nÉ ela menina\nQue vem e que passa\nNum doce balanço\nA caminho do mar\n\nMoça do corpo dourado\nDo sol de Ipanema\nO seu balançado é mais que um poema\nÉ a coisa mais linda que eu já vi passar`,
+          chords: `[Tom: F]\nF        G7\nOlha que coisa mais linda\nGm7      C7\nMais cheia de graça\nF\nÉ ela menina` },
+      ]
+    }
+  ];
+  save();
+}
+// Registro do Service Worker para Offline
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.log("SW Erro:", err));
+}
+
+// Função de Busca Online
+async function searchLyricsOnline() {
+  const artist = document.getElementById('search-artist').value.trim();
+  const title = document.getElementById('search-title').value.trim();
+  const status = document.getElementById('search-status');
+  
+  if (!artist || !title) {
+    alert("Preencha artista e música para buscar.");
+    return;
+  }
+
+  status.textContent = "Buscando...";
+  status.classList.remove('hidden');
+  vibrate();
+
+  try {
+    const response = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+    const data = await response.json();
+
+    if (data.lyrics) {
+      document.getElementById('input-song-lyrics').value = data.lyrics;
+      document.getElementById('input-song-name').value = title.toUpperCase();
+      document.getElementById('input-song-artist').value = artist;
+      status.textContent = "Encontrado! Ajuste a letra ou cifra abaixo.";
+      status.style.color = "var(--accent)";
+      if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+    } else {
+      status.textContent = "Não encontrado. Tente outro termo.";
+      status.style.color = "var(--accent2)";
+    }
+  } catch (error) {
+    status.textContent = "Erro na conexão. Verifique a internet.";
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────
+load();
+seedDemo();
+document.documentElement.classList.toggle('light-mode', state.lightMode);
+renderHome();
+showScreen('home');
+</script>
+</body>
+</html>
