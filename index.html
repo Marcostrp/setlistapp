@@ -521,26 +521,29 @@
 <div class="modal-overlay hidden" id="modal-add-song">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="modal-song-title">Adicionar Música</div>
+    <div class="modal-title">Adicionar Música</div>
+    
+    <div style="background: var(--surface2); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border);">
+      <div class="modal-label" style="color: var(--accent); margin-bottom: 10px;">BUSCAR LETRA ONLINE</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <input class="modal-input" id="search-artist" placeholder="Artista" style="margin-bottom:0; flex:1">
+        <input class="modal-input" id="search-title" placeholder="Música" style="margin-bottom:0; flex:1">
+      </div>
+      <button class="btn-primary" onclick="searchLyricsOnline()" style="width:100%">
+        🔍 BUSCAR AGORA
+      </button>
+      <div id="search-status" style="font-size: 12px; text-align: center; margin-top: 8px; display: none;"></div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 15px; color: var(--text3); font-size: 11px;">OU PREENCHA MANUALMENTE</div>
+
     <div class="edit-title-row" style="margin-bottom:14px">
       <div style="flex:1">
         <div class="modal-label">NOME DA MÚSICA</div>
         <input class="modal-input" id="input-song-name" placeholder="Ex: Evidências" maxlength="80" style="margin-bottom:0">
       </div>
     </div>
-    <div class="modal-label">ARTISTA / BANDA</div>
-    <input class="modal-input" id="input-song-artist" placeholder="Ex: Chitãozinho & Xororó" maxlength="80">
-    <div class="tabs" id="song-tabs">
-      <button class="tab-btn active" id="tab-lyrics" onclick="switchSongTab('lyrics')">Letra</button>
-      <button class="tab-btn" id="tab-chords" onclick="switchSongTab('chords')">Cifra</button>
     </div>
-    <textarea class="song-textarea" id="input-song-lyrics" placeholder="Cole ou escreva a letra aqui..."></textarea>
-    <textarea class="song-textarea" id="input-song-chords" placeholder="Cole ou escreva a cifra aqui..." style="display:none"></textarea>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('modal-add-song')">Cancelar</button>
-      <button class="btn-primary" id="btn-save-song" onclick="saveSong()">Adicionar</button>
-    </div>
-  </div>
 </div>
 
 <!-- Confirm Delete Song -->
