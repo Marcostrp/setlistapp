@@ -518,7 +518,7 @@
 </div>
 
 <!-- Add / Edit Song -->
-<div class="modal-overlay hidden" id="modal-add-song">
+<div id="modal-add-song" class="modal-overlay hidden">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Adicionar Música</div>
@@ -532,18 +532,30 @@
       <button class="btn-primary" onclick="searchLyricsOnline()" style="width:100%">
         🔍 BUSCAR AGORA
       </button>
-      <div id="search-status" style="font-size: 12px; text-align: center; margin-top: 8px; display: none;"></div>
+      <div id="search-status" style="font-size: 12px; text-align: center; margin-top: 8px; color: var(--text2);"></div>
     </div>
 
     <div style="text-align: center; margin-bottom: 15px; color: var(--text3); font-size: 11px;">OU PREENCHA MANUALMENTE</div>
 
-    <div class="edit-title-row" style="margin-bottom:14px">
-      <div style="flex:1">
-        <div class="modal-label">NOME DA MÚSICA</div>
-        <input class="modal-input" id="input-song-name" placeholder="Ex: Evidências" maxlength="80" style="margin-bottom:0">
-      </div>
+    <div class="modal-label">NOME DA MÚSICA</div>
+    <input class="modal-input" id="input-song-name" placeholder="Ex: Evidências">
+    
+    <div class="modal-label">ARTISTA</div>
+    <input class="modal-input" id="input-song-artist" placeholder="Ex: Chitãozinho & Xororó">
+    
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-lyrics" onclick="switchSongTab('lyrics')">Letra</button>
+      <button class="tab-btn" id="tab-chords" onclick="switchSongTab('chords')">Cifra</button>
     </div>
+    
+    <textarea class="song-textarea" id="input-song-lyrics" placeholder="A letra aparecerá aqui..."></textarea>
+    <textarea class="song-textarea" id="input-song-chords" placeholder="A cifra aparecerá aqui..." style="display:none"></textarea>
+    
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-add-song')">Cancelar</button>
+      <button class="btn-primary" onclick="saveSong()">Salvar Música</button>
     </div>
+  </div>
 </div>
 
 <!-- Confirm Delete Song -->
