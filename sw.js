@@ -1,10 +1,8 @@
 const CACHE_NAME = 'setlist-cache-v1';
-// Corrigido para index.html e adicionado fontes
 const assets = [
   './',
   './index.html', 
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'
+  './manifest.json'
 ];
 
 self.addEventListener('install', e => {
